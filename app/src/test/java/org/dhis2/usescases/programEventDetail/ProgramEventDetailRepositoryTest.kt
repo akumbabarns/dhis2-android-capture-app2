@@ -4,8 +4,13 @@ import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.Single
+import java.util.Date
 import org.hisp.dhis.android.core.D2
+import org.hisp.dhis.android.core.category.CategoryOptionCombo
 import org.hisp.dhis.android.core.common.FeatureType
+import org.hisp.dhis.android.core.common.State
+import org.hisp.dhis.android.core.event.Event
+import org.hisp.dhis.android.core.event.EventStatus
 import org.hisp.dhis.android.core.program.Program
 import org.hisp.dhis.android.core.program.ProgramStage
 import org.junit.Before
@@ -23,6 +28,32 @@ class ProgramEventDetailRepositoryTest {
     @Before
     fun setUp() {
         repository = ProgramEventDetailRepositoryImpl(programUid, d2)
+    }
+
+    @Test
+    fun `Should get the ProgramEventModel by using the event uid`() {
+        val event = dummyEvent()
+
+        whenever(d2.eventModule().events().byUid()) doReturn mock()
+        whenever(d2.eventModule().events().byUid().eq("eventUid")) doReturn mock()
+        whenever(
+            d2.eventModule().events().byUid().eq("eventUid").withTrackedEntityDataValues()
+        ) doReturn mock()
+        whenever(
+            d2.eventModule().events().byUid().eq("eventUid").withTrackedEntityDataValues().one()
+        ) doReturn mock()
+        whenever(
+            d2.eventModule().events().byUid().eq("eventUid").withTrackedEntityDataValues().one()
+                .get()
+        ) doReturn Single.just(event)
+        mockTransformToProgramEventModel()
+
+        val testObserver = repository.getInfoForEvent("eventUid").test()
+
+        testObserver.assertNoErrors()
+        testObserver.assertValue {
+            it.orgUnitName() == "OrgUnitName" && it.eventState() == State.TO_UPDATE
+        }
     }
 
     @Test
@@ -101,7 +132,7 @@ class ProgramEventDetailRepositoryTest {
 
     @Test
     fun `Should return true if the user has Access Data Write permission`() {
-        mockProgram()
+        mockProgramAccess()
         mockProgramStage()
         whenever(
             d2.programModule().programs().uid(programUid).blockingGet().access().data().write()
@@ -117,8 +148,8 @@ class ProgramEventDetailRepositoryTest {
     }
 
     @Test
-    fun `Should return false if the user has Access Data Write permission but programStage is null`() {
-        mockProgram()
+    fun `Should return false if the user has Write permission but programStage is null`() {
+        mockProgramAccess()
         mockNullProgramStage()
         whenever(
             d2.programModule().programs().uid(programUid).blockingGet().access().data().write()
@@ -129,8 +160,57 @@ class ProgramEventDetailRepositoryTest {
         assert(!hasWritePermission)
     }
 
+    private fun mockTransformToProgramEventModel() {
+        mockOrgUnitName()
+        mockProgramStageDataElements()
+        mockProgram()
+        mockCategoryOptionCombo()
+    }
+
+    private fun mockOrgUnitName() {
+        whenever(
+            d2.organisationUnitModule().organisationUnits()
+        ) doReturn mock()
+        whenever(
+            d2.organisationUnitModule().organisationUnits().uid("orgUnitUid")
+        ) doReturn mock()
+        whenever(
+            d2.organisationUnitModule().organisationUnits().uid("orgUnitUid").blockingGet()
+        ) doReturn mock()
+        whenever(
+            d2.organisationUnitModule().organisationUnits().uid("orgUnitUid").blockingGet()
+                .displayName()
+        ) doReturn "OrgUnitName"
+    }
+
+    private fun mockProgramStageDataElements() {
+        whenever(d2.programModule().programStageDataElements().byProgramStage()) doReturn mock()
+        whenever(
+            d2.programModule().programStageDataElements().byProgramStage().eq("programStage")
+        ) doReturn mock()
+        whenever(
+            d2.programModule().programStageDataElements()
+                .byProgramStage().eq("programStage").blockingGet()
+        ) doReturn emptyList()
+    }
 
     private fun mockProgram() {
+        whenever(d2.programModule().programs()) doReturn mock()
+        whenever(d2.programModule().programs().uid("programUid")) doReturn mock()
+        whenever(
+            d2.programModule().programs().uid("programUid").blockingGet()
+        ) doReturn dummyProgramWithExpiryInfo()
+    }
+
+    private fun mockCategoryOptionCombo() {
+        whenever(d2.categoryModule().categoryOptionCombos()) doReturn mock()
+        whenever(d2.categoryModule().categoryOptionCombos().uid("attrComboUid")) doReturn mock()
+        whenever(
+            d2.categoryModule().categoryOptionCombos().uid("attrComboUid").blockingGet()
+        ) doReturn dummyCategoryOptionCombo()
+    }
+
+    private fun mockProgramAccess() {
         whenever(d2.programModule().programs().uid(programUid)) doReturn mock()
         whenever(d2.programModule().programs().uid(programUid).blockingGet()) doReturn mock()
         whenever(
@@ -171,4 +251,25 @@ class ProgramEventDetailRepositoryTest {
             d2.programModule().programStages().byProgramUid().eq(programUid).one().blockingGet()
         ) doReturn null
     }
+
+    private fun dummyEvent() =
+        Event.builder()
+            .uid("eventUid")
+            .organisationUnit("orgUnitUid")
+            .eventDate(Date())
+            .program("programUid")
+            .programStage("programStage")
+            .attributeOptionCombo("attrComboUid")
+            .status(EventStatus.ACTIVE)
+            .build()
+
+    private fun dummyProgramWithExpiryInfo() =
+        Program.builder()
+            .uid("programUid")
+            .completeEventsExpiryDays(0)
+            .expiryDays(0)
+            .build()
+
+    private fun dummyCategoryOptionCombo() =
+        CategoryOptionCombo.builder().uid("attrComboUid").displayName("default").build()
 }
