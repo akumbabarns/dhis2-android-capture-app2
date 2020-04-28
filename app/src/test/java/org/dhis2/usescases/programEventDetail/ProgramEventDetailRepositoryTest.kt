@@ -6,7 +6,6 @@ import com.nhaarman.mockitokotlin2.whenever
 import io.reactivex.Single
 import java.util.Date
 import org.hisp.dhis.android.core.D2
-import org.hisp.dhis.android.core.category.CategoryOptionCombo
 import org.hisp.dhis.android.core.common.FeatureType
 import org.hisp.dhis.android.core.common.State
 import org.hisp.dhis.android.core.event.Event
@@ -23,16 +22,18 @@ class ProgramEventDetailRepositoryTest {
     private lateinit var repository: ProgramEventDetailRepository
 
     private val d2: D2 = Mockito.mock(D2::class.java, RETURNS_DEEP_STUBS)
+    private val mapper: ProgramEventMapper = mock()
     private val programUid = "programUid"
 
     @Before
     fun setUp() {
-        repository = ProgramEventDetailRepositoryImpl(programUid, d2)
+        repository = ProgramEventDetailRepositoryImpl(programUid, d2, mapper)
     }
 
     @Test
     fun `Should get the ProgramEventModel by using the event uid`() {
         val event = dummyEvent()
+        val programEvent = dummyProgramEventModel()
 
         whenever(d2.eventModule().events().byUid()) doReturn mock()
         whenever(d2.eventModule().events().byUid().eq("eventUid")) doReturn mock()
@@ -46,13 +47,13 @@ class ProgramEventDetailRepositoryTest {
             d2.eventModule().events().byUid().eq("eventUid").withTrackedEntityDataValues().one()
                 .get()
         ) doReturn Single.just(event)
-        mockTransformToProgramEventModel()
+        whenever(mapper.eventToProgramEvent(event)) doReturn programEvent
 
         val testObserver = repository.getInfoForEvent("eventUid").test()
 
         testObserver.assertNoErrors()
         testObserver.assertValue {
-            it.orgUnitName() == "OrgUnitName" && it.eventState() == State.TO_UPDATE
+            it.orgUnitName() == "orgUnitName" && it.eventState() == State.TO_UPDATE
         }
     }
 
@@ -160,56 +161,6 @@ class ProgramEventDetailRepositoryTest {
         assert(!hasWritePermission)
     }
 
-    private fun mockTransformToProgramEventModel() {
-        mockOrgUnitName()
-        mockProgramStageDataElements()
-        mockProgram()
-        mockCategoryOptionCombo()
-    }
-
-    private fun mockOrgUnitName() {
-        whenever(
-            d2.organisationUnitModule().organisationUnits()
-        ) doReturn mock()
-        whenever(
-            d2.organisationUnitModule().organisationUnits().uid("orgUnitUid")
-        ) doReturn mock()
-        whenever(
-            d2.organisationUnitModule().organisationUnits().uid("orgUnitUid").blockingGet()
-        ) doReturn mock()
-        whenever(
-            d2.organisationUnitModule().organisationUnits().uid("orgUnitUid").blockingGet()
-                .displayName()
-        ) doReturn "OrgUnitName"
-    }
-
-    private fun mockProgramStageDataElements() {
-        whenever(d2.programModule().programStageDataElements().byProgramStage()) doReturn mock()
-        whenever(
-            d2.programModule().programStageDataElements().byProgramStage().eq("programStage")
-        ) doReturn mock()
-        whenever(
-            d2.programModule().programStageDataElements()
-                .byProgramStage().eq("programStage").blockingGet()
-        ) doReturn emptyList()
-    }
-
-    private fun mockProgram() {
-        whenever(d2.programModule().programs()) doReturn mock()
-        whenever(d2.programModule().programs().uid("programUid")) doReturn mock()
-        whenever(
-            d2.programModule().programs().uid("programUid").blockingGet()
-        ) doReturn dummyProgramWithExpiryInfo()
-    }
-
-    private fun mockCategoryOptionCombo() {
-        whenever(d2.categoryModule().categoryOptionCombos()) doReturn mock()
-        whenever(d2.categoryModule().categoryOptionCombos().uid("attrComboUid")) doReturn mock()
-        whenever(
-            d2.categoryModule().categoryOptionCombos().uid("attrComboUid").blockingGet()
-        ) doReturn dummyCategoryOptionCombo()
-    }
-
     private fun mockProgramAccess() {
         whenever(d2.programModule().programs().uid(programUid)) doReturn mock()
         whenever(d2.programModule().programs().uid(programUid).blockingGet()) doReturn mock()
@@ -263,13 +214,16 @@ class ProgramEventDetailRepositoryTest {
             .status(EventStatus.ACTIVE)
             .build()
 
-    private fun dummyProgramWithExpiryInfo() =
-        Program.builder()
-            .uid("programUid")
-            .completeEventsExpiryDays(0)
-            .expiryDays(0)
-            .build()
-
-    private fun dummyCategoryOptionCombo() =
-        CategoryOptionCombo.builder().uid("attrComboUid").displayName("default").build()
+    private fun dummyProgramEventModel() =
+        ProgramEventViewModel.create(
+            "eventUid",
+            "orgUnitUid",
+            "orgUnitName",
+            Date(),
+            State.TO_UPDATE,
+            emptyList(),
+            EventStatus.ACTIVE,
+            false,
+            "attrOptionCombo"
+        )
 }
