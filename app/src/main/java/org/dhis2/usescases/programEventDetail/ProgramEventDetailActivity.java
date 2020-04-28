@@ -525,7 +525,7 @@ public class ProgramEventDetailActivity extends ActivityGlobalAbstract implement
     @Override
     public boolean onMapClick(@NonNull LatLng point) {
         PointF pointf = map.getProjection().toScreenLocation(point);
-        RectF rectF = new RectF(pointf.x - 10, pointf.y - 10, pointf.x + 10, pointf.y + 10);
+        RectF rectF = new RectF(pointf.x - 50, pointf.y - 50, pointf.x + 50, pointf.y + 50);
         List<Feature> features = map.queryRenderedFeatures(rectF, featureType == FeatureType.POINT ? "POINT_LAYER" : "POLYGON_LAYER");
         if (!features.isEmpty()) {
             for (Feature feature : features) {
