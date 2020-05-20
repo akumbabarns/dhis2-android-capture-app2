@@ -135,6 +135,7 @@ public class DataSetSectionFragment extends FragmentGlobalAbstract implements Da
 
 
         List<List<CategoryOption>> columnHeaders = dataTableModel.header();
+
         adapter.setCatCombo(dataTableModel.catCombo().uid());
         adapter.setTableView(tableView);
         adapter.initializeRows(accessDataWrite);
@@ -149,6 +150,7 @@ public class DataSetSectionFragment extends FragmentGlobalAbstract implements Da
 
         tableView.setAdapter(adapter);
         tableView.setHeaderCount(columnHeaders.size());
+
         tableView.setShadowColor(ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY));
 
         adapter.swap(fields);
@@ -186,12 +188,19 @@ public class DataSetSectionFragment extends FragmentGlobalAbstract implements Da
             }
         }
 
+        List<List<Integer>> headerMeasure = MeasureExtensionsKt.measureText(
+                columnHeaders,
+                getContext(),
+                300
+        );
+
+        adapter.setColumnHeaderWidths(headerMeasure);
+
         adapter.setAllItems(
                 columnHeaders,
                 dataTableModel.rows(),
                 cells,
                 adapter.getShowRowTotal());
-
 
         presenterFragment.initializeProcessor(this);
 

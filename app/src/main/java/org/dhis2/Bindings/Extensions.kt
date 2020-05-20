@@ -69,6 +69,9 @@ val Int.dp: Int
 val Int.px: Int
     get() = (this / Resources.getSystem().displayMetrics.density).toInt()
 
+val Int.isEven: Boolean
+    get() = this % 2 == 0
+
 fun AppCompatActivity.isKeyboardOpened(): Boolean {
     val r = Rect()
     val keyboardVisibilityThreshold = 100

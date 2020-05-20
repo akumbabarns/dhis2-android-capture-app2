@@ -387,6 +387,15 @@ public abstract class AbstractTableAdapter<CH, RH, C> implements ITableAdapter {
         return 1;
     }
 
+    protected int getHeaderPosition(Object object) {
+        for (int headerNumber = 0; headerNumber < mTableView.getHeaderCount(); headerNumber++) {
+            if (mColumnsHeaderRecyclerViewAdapters.get(headerNumber).getItems().contains(object)) {
+                return headerNumber;
+            }
+        }
+        throw new IllegalArgumentException("Header label does not exist");
+    }
+
 
     public void clear() {
         mColumnsHeaderRecyclerViewAdapters.clear();

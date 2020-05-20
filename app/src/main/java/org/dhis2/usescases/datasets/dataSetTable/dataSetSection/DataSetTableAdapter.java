@@ -1,12 +1,10 @@
 package org.dhis2.usescases.datasets.dataSetTable.dataSetSection;
 
 import android.content.Context;
-import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
@@ -99,9 +97,14 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
     private String catCombo;
     private Boolean dataElementDecoration;
     private String maxLabel;
+    private List<List<Integer>> headerMeasures;
 
     public void setMaxLabel(String maxLabel) {
         this.maxLabel = maxLabel;
+    }
+
+    public void setColumnHeaderWidths(List<List<Integer>> headerMeasure) {
+        this.headerMeasures = headerMeasure;
     }
 
     public enum TableScale {
@@ -212,7 +215,7 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
     public void onBindCellViewHolder(AbstractViewHolder holder, Object cellItemModel, int columnPosition, int rowPosition) {
 
         rows.get(holder.getItemViewType()).onBind(holder, viewModels.get(rowPosition).get(columnPosition).withValue(cellItemModel.toString()), cellItemModel.toString());
-        holder.itemView.getLayoutParams().width = currentWidth;
+        holder.itemView.getLayoutParams().width = headerMeasures.get(headerMeasures.size() - 1).get(columnPosition);
         holder.itemView.getLayoutParams().height = getColumnHeaderHeight();
     }
 
@@ -257,9 +260,17 @@ public class DataSetTableAdapter extends AbstractTableAdapter<CategoryOption, Da
         if (((CategoryOption) columnHeaderItemModel).displayName().isEmpty()) {
             ((DataSetRHeaderHeader) holder).binding.container.getLayoutParams().width = currentWidth;
         } else {
-            int i = getHeaderRecyclerPositionFor(columnHeaderItemModel);
+            int columnSpan = getHeaderRecyclerPositionFor(columnHeaderItemModel);
+            int headerPos = getHeaderPosition(columnHeaderItemModel);
+            int colWidth;
+            if (columnSpan > 1) {
+                colWidth = headerMeasures.get(headerPos).get(position);
+            } else {
+                colWidth = headerMeasures.get(headerMeasures.size() - 1).get(position);
+            }
+
             ((DataSetRHeaderHeader) holder).binding.container.getLayoutParams().width =
-                    (currentWidth * i + (int) (context.getResources().getDisplayMetrics().density * (i - 1)));
+                    (colWidth + (int) (context.getResources().getDisplayMetrics().density * (columnSpan - 1)));
         }
         ((DataSetRHeaderHeader) holder).binding.title.requestLayout();
     }
