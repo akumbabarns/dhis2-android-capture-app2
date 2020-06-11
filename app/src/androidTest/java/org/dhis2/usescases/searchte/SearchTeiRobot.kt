@@ -4,6 +4,8 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.RecyclerViewActions.actionOnHolderItem
+import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItem
 import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition
 import androidx.test.espresso.contrib.RecyclerViewActions.scrollTo
 import androidx.test.espresso.matcher.ViewMatchers
@@ -39,18 +41,18 @@ class SearchTeiRobot : BaseRobot() {
     }
 
     fun clickOnTEI(position: Int) {
-        onView(withId(R.id.scrollView)).perform(
-            actionOnItemAtPosition<SearchTEViewHolder>(position, click())
-        )
+        onView(withId(R.id.scrollView)).perform(actionOnItem<SearchTEViewHolder>(hasDescendant(withText("Filona")), click()))
+        //    actionOnItemAtPosition<SearchTEViewHolder>(position, click())
+
     }
 
     fun checkTEIsDelete(teiName: String, teiLastName: String) {
         /*onView(withId(R.id.scrollView))
             .check(matches(withSize(30)))*/
 
-        onView(withId(R.id.scrollView))
-            .check(matches(not(hasItem(hasDescendant(allOf(withText(teiName), hasSibling(withText(teiLastName)))))))) // to check
+
+        onView(withId(R.id.scrollView)).check(matches(not(hasItem(allOf(hasDescendant(withText("Filona")), hasDescendant(
+            withText("Ryder")))))))
         //.check(matches(not(hasItem(hasDescendant(withText(teiName))))))
     }
-
 }

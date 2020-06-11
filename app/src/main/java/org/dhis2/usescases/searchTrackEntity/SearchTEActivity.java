@@ -414,11 +414,11 @@ public class SearchTEActivity extends ActivityGlobalAbstract implements SearchTE
 
     @Override
     public void setTutorial() {
-        new Handler().postDelayed(() ->
+    /*    new Handler().postDelayed(() ->
                         HelpManager.getInstance().show(getActivity(),
                                 HelpManager.TutorialName.TEI_SEARCH,
                                 null),
-                500);
+                500); */
     }
 
     //endregion
