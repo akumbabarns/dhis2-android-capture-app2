@@ -62,6 +62,10 @@ import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
 import timber.log.Timber;
 
+import org.matomo.sdk.Matomo;
+import org.matomo.sdk.Tracker;
+import org.matomo.sdk.TrackerBuilder;
+
 /**
  * QUADRAM. Created by ppajuelo on 27/09/2017.
  */
@@ -98,6 +102,7 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
 
     private boolean fromBackGround = false;
     private boolean recreated;
+    private Tracker matomoTracker;
 
     @Override
     public void onCreate() {
@@ -122,6 +127,13 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         }
         setUpServerComponent();
         setUpRxPlugin();
+    }
+
+    public synchronized Tracker getTracker() {
+        if (matomoTracker == null){
+            matomoTracker = TrackerBuilder.createDefault("https://mipruebacustom.matomo.cloud/", 1).build(Matomo.getInstance(this));
+        }
+        return matomoTracker;
     }
 
     private void populateDBIfNeeded() {

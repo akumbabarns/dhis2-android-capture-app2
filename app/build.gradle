@@ -273,6 +273,8 @@ dependencies {
         transitive = true
     }
 
+    implementation 'org.matomo.sdk:tracker:4.1.2'
+
     //FIREBASE
     implementation 'com.google.firebase:firebase-core:17.2.0'
     implementation 'com.google.firebase:firebase-perf:19.0.0'
